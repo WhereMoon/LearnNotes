@@ -905,3 +905,22 @@ git merge feature/新功能
 # 5. 删除功能分支
 git branch -d feature/新功能
 git push origin --delete feature/新功能
+
+命令速查表
+操作	命令
+初始化	git init
+克隆	git clone <url>
+状态	git status
+添加	git add .
+提交	git commit -m "信息"
+推送	git push
+拉取	git pull
+查看日志	git log --oneline
+创建分支	git checkout -b 分支名
+切换分支	git checkout 分支名
+合并分支	git merge 分支名
+删除分支	git branch -d 分支名
+查看差异	git diff
+撤销修改	git checkout -- 文件
+暂存修改	git stash
+应用暂存	git stash pop
