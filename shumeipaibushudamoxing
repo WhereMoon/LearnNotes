@@ -1,0 +1,200 @@
+📘 树莓派 5（8GB）部署 Qwen2.5-7B 模型实战文档
+
+Deployment Report: Running Qwen2.5-7B on Raspberry Pi 5 (8GB) with llama.cpp
+
+1️⃣ 部署目标 | Deployment Goal
+中文
+
+在 树莓派 5（8GB 内存） 上本地部署一个可用的大语言模型，并支持：
+
+本地 CLI 交互
+
+后续可扩展为 HTTP API
+
+可被 另一台 Mac / PC 调用
+
+English
+
+Deploy a local large language model on Raspberry Pi 5 (8GB RAM) that:
+
+Runs via CLI
+
+Can be exposed as a local HTTP API
+
+Can be accessed remotely (e.g. from a Mac)
+
+2️⃣ 最终选择的技术方案 | Final Chosen Solution
+✅ 实际部署方案（最终成功）
+项目	选择
+推理框架	llama.cpp
+模型格式	GGUF（量化）
+模型	Qwen2.5-7B-Instruct
+量化	Q4_0（CPU 友好）
+运行方式	CLI → 可扩展到 API
+❌ 未采用方案（原因）
+方案	问题
+Ollama	网络受限，安装脚本被重置
+原始 FP16 模型	内存不够
+单文件 GGUF	HuggingFace 实际提供的是分片
+3️⃣ 完整部署流程 | Full Deployment Workflow
+Step 1：准备环境
+
+Prepare the environment
+
+sudo apt update
+sudo apt install -y git cmake build-essential
+
+
+⚠️ 注意
+llama.cpp 已 不再支持 make，必须使用 CMake
+
+Step 2：获取 llama.cpp 源码
+
+Get llama.cpp source code
+
+cd ~
+git clone https://github.com/ggerganov/llama.cpp.git
+cd llama.cpp
+
+Step 3：使用 CMake 编译
+
+Build with CMake (required)
+
+mkdir build
+cd build
+cmake ..
+cmake --build . --config Release -j$(nproc)
+
+⚠️ 遇到的问题
+
+❌ make -j$(nproc) 报错
+
+❌ 提示 Build system changed: replaced by CMake
+
+✅ 解决方式
+
+改用 cmake + cmake --build
+
+问题本身不是错误，而是构建系统升级提示
+
+Step 4：模型权重准备（关键）
+
+Prepare model weights (CRITICAL)
+
+❗ 常见误解
+
+llama.cpp 不会自带模型权重
+models 目录里只有 vocab 文件，不是模型
+
+实际下载到的文件（HuggingFace）
+qwen2.5-7b-instruct-q4_0-00001-of-00002.gguf
+qwen2.5-7b-instruct-q4_0-00002-of-00002.gguf
+
+
+这是 分片 GGUF 模型，不是错误。
+
+建议目录结构
+/home/zhang1083/models/
+├── qwen2.5-7b-instruct-q4_0-00001-of-00002.gguf
+└── qwen2.5-7b-instruct-q4_0-00002-of-00002.gguf
+
+Step 5：第一次运行（CLI）
+
+Run the model via CLI
+
+cd ~/llama.cpp/build
+
+./bin/llama-cli \
+  -m /home/zhang1083/models/qwen2.5-7b-instruct-q4_0-00001-of-00002.gguf \
+  -t 4 \
+  -c 2048 \
+  -n 128
+
+4️⃣ 关键问题与解决总结 | Problems & Solutions
+❌ 问题 1：找不到模型文件
+failed to open GGUF file (没有那个文件或目录)
+
+
+原因
+
+使用了不存在的路径
+
+使用了“想象中的合并文件名”
+
+解决
+
+使用 find 查找真实 gguf
+
+使用实际存在的文件路径
+
+❌ 问题 2：invalid split file name
+invalid split file name: Qwen2.5-7B-Instruct-Q4_0.gguf
+
+
+原因
+
+分片模型不能用“假想合并名”
+
+llama.cpp 需要 第一个分片文件
+
+正确方式
+
+-m qwen2.5-7b-instruct-q4_0-00001-of-00002.gguf
+
+
+llama.cpp 会 自动加载后续分片
+
+❌ 问题 3：误以为 vocab 就是模型
+ggml-vocab-qwen2.gguf
+
+
+原因
+
+vocab 文件 ≠ 模型权重
+
+权重体积通常是 几个 GB
+
+解决
+
+明确区分 vocab / weights
+
+权重必须单独下载
+
+5️⃣ 成功标志 | Success Indicators
+当你看到这些，说明部署成功 ✅
+
+llama.cpp ASCII Logo
+
+available commands
+
+进入交互式输入
+
+无任何 load error
+
+available commands:
+  /exit
+  /regen
+  /clear
+
+6️⃣ 当前状态总结 | Final Status
+中文
+
+✅ 树莓派 5 成功运行 Qwen2.5-7B
+
+✅ 使用 CPU + Q4 量化
+
+✅ CLI 已可交互
+
+🔜 可扩展为 HTTP API
+
+🔜 可被 Mac / PC 远程调用
+
+English
+
+Qwen2.5-7B successfully runs on Raspberry Pi 5
+
+CPU-only with Q4 quantization
+
+CLI interaction works
+
+Ready for API exposure and remote access
