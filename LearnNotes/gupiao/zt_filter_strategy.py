@@ -121,9 +121,10 @@ def filter_stocks(df: pd.DataFrame) -> pd.DataFrame:
     cond_price = data[col_price] < 30 if col_price else pd.Series([True] * len(data), index=data.index)  # 单价 < 30
     cond_mktcap = data[col_mktcap] < 200 if col_mktcap else pd.Series([True] * len(data), index=data.index)  # 总市值 < 200 亿
     cond_times = data[col_times] >= 3 if col_times else pd.Series([True] * len(data), index=data.index)  # 半年内涨停次数 >= 3
-    cond_lianban = data[col_lianban] < 4 if col_lianban else pd.Series([True] * len(data), index=data.index)  # 连板 < 4（去掉 4 连板及以上）
+    cond_lianban_lt4 = data[col_lianban] < 4 if col_lianban else pd.Series([True] * len(data), index=data.index)  # 连板 < 4
+    cond_first_board = data[col_lianban] == 1 if col_lianban else pd.Series([True] * len(data), index=data.index)  # 仅首板
 
-    filtered = data[cond_price & cond_mktcap & cond_times & cond_lianban].copy()
+    filtered = data[cond_price & cond_mktcap & cond_times & cond_lianban_lt4 & cond_first_board].copy()
 
     # 只保留关键信息
     keep_cols = [col_code, col_name]
@@ -259,6 +260,7 @@ def main():
     print("  ✅ 总市值 < 200 亿元")
     print("  ✅ 近半年涨停次数 >= 3")
     print("  ✅ 剔除连续涨停 4 天及以上的股票")
+    print("  ✅ 仅首板（连板数 = 1）")
     print(f"{'='*70}\n")
     
     result = filter_stocks(df_zt)
